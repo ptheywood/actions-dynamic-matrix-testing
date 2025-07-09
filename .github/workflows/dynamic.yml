@@ -16,7 +16,7 @@ jobs:
         run: |
           echo "matrix={"os": ["ubuntu-latest"], "python": ["3.9", "3.10"]}" >> "$GITHUB_OUTPUT"
   execute:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     needs: setup
     strategy:
       fail-fast: false
