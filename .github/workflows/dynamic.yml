@@ -1,0 +1,30 @@
+name: dynamic
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.output-matrix.outputs.matrix}}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Output Matrix
+        id: output-matrix
+        run: |
+          echo "matrix={"os": ["ubuntu-latest"], "python": ["3.9", "3.10"]}" >> "$GITHUB_OUTPUT"
+  execute:
+    runs-on: ${{ matrix.os }}
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        ${{ fromJSON(needs.setup.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: print
+        run: | 
+          echo "os=${{ matrix.os }}"
+          echo "python=${{ matrix.python }}"
