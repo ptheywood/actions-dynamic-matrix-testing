@@ -1,0 +1,14 @@
+quick:
+  os:
+    - ubuntu-latest
+  python:
+    - 3.9
+
+full:
+  os:
+    - ubuntu-latest
+    - windows-latest
+  python:
+    - 3.9
+    - 3.10
+    - 3.11
