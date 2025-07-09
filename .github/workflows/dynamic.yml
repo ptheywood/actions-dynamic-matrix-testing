@@ -16,7 +16,11 @@ jobs:
         id: output-matrix
         run: |
           MATRIX_YML=".github/matrices.yaml"
-          matrix=$(yq -o j -I 0 '.quick' "$MATRIX_YML")
+          if [[ "${{ github.event_name}}" == "workflow_dispatch" ]]; then
+            matrix=$(yq -o j -I 0 '.full' "$MATRIX_YML")
+          else
+            matrix=$(yq -o j -I 0 '.quick' "$MATRIX_YML")
+          fi
           echo "matrix=${matrix}" >> "$GITHUB_OUTPUT"
   execute:
     runs-on: ubuntu-latest
