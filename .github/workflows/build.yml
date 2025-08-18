@@ -1,0 +1,105 @@
+name: build
+
+on:
+  push:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+  workflow_dispatch:
+
+jobs:
+  # Select the CI matrix for the full job.
+  setup:
+    # Do this for non-pull request triggers, non-pull-request.labeled triggers, and pull-request.labeled triggers which add a ci- label.
+    if: | 
+      (github.event_name != 'pull_request') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled') ||
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && startsWith(github.event.label.name, 'ci-'))
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.output-matrix.outputs.matrix}}
+    env:
+      # the choice of matrix, initialised to the quick default
+      SELECTED_MATRIX: "quick"
+    steps:
+      - uses: actions/checkout@v4
+      # Choose the full matrix if the workflow was triggered by a workflow dispatch, push to main, or PR with the ci-full label
+      - name: Select full matrix
+        if: |
+          (github.event_name == 'workflow_dispatch') || 
+          (github.event_name == 'push' && github.ref == 'refs/heads/main' ) ||
+          (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full'))
+        run: |
+          echo "SELECTED_MATRIX=full" >> $GITHUB_ENV
+
+      # Output the selected matrix for subsequent steps
+      - name: Output Matrix
+        id: output-matrix
+        run: |
+          MATRIX_YML=".github/matrices.yaml"
+          matrix=$(yq -o j -I 0 ".${SELECTED_MATRIX}" "$MATRIX_YML")
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+  
+  # Run the build job using the selected dynamic matrix.
+  build:
+    runs-on: ubuntu-latest
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        ${{ fromJSON(needs.setup.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Add custom problem matchers for annotations
+        run: echo "::add-matcher::.github/problem-matchers.json"
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get install -y cmake
+
+      - name: Select Python
+        if: ${{ matrix.PYTHON != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.PYTHON }}
+
+      - name: Install python dependencies
+        if: ${{ matrix.PYTHON != '' }}
+        run: |
+          sudo apt-get install -y python3-venv
+          python3 -m pip install --upgrade wheel build setuptools
+          
+      - name: Install docs dependencies
+        run: |
+          sudo apt-get install -y pandoc
+
+      - name: Install lint dependencies
+        run: |
+          python3 -m pip install cpplint
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Configure CMake
+        run: >
+          cmake . -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -Werror=dev
+          -DCMAKE_WARN_DEPRECATED="OFF"
+          -DADMT_BUILD_DOCS="ON
+          -DADMT_BUILD_TESTS="ON"
+          -DADMT_BUILD_PYTHON="ON"
+          -DPYTHON3_EXACT_VERSION=${{ matrix.python }}
+          
+      - name: Build admt
+        run: cmake --build build --target admt --verbose -j `nproc`
+
+      - name: Build docs
+        run: cmake --build build --target docs --verbose -j `nproc`
+      
+      - name: Build tests
+        run: cmake --build build --target tests --verbose -j `nproc`
+
+      - name: Build python
+        run: cmake --build build --target python --verbose -j `nproc`
+
+      - name: Build all other targets
+        run: cmake --build build --verbose -j `nproc`
