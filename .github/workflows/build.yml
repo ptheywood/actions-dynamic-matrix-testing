@@ -103,3 +103,7 @@ jobs:
 
       - name: Build all other targets
         run: cmake --build build --verbose -j `nproc`
+
+      - name: Run Ctest
+        run: ctest --test-dir build --verbose -j `nproc`
+      
