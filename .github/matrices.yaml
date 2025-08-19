@@ -3,6 +3,8 @@ minimal:
     - runs-on: ubuntu-24.04
       container: ""
       hostcxx: "gcc-14"
+  config:
+    - type: "Release"
   python:
     "3.9"
 
@@ -14,6 +16,8 @@ quick:
     - runs-on: windows-2025
       container: ""
       hostcxx: "Visual Studio 17 2022"
+  config:
+    - type: "Release"
   python:
     - "3.9"
 
@@ -28,6 +32,9 @@ full:
     - runs-on: ubuntu-24.04
       container: "quay.io/pypa/manylinux_2_28_x86_64"
       hostcxx: "gcc-toolset-12"
+  config:
+    - type: "Release"
+    - type: "Debug"
   python:
     - "3.9"
     - "3.10"
