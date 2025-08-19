@@ -118,8 +118,8 @@ jobs:
       - name: Configure CMake
         run: >
           cmake . -B build
-          ${{ env.CMAKE_GENERATOR_FLAG }}
-          ${{ env.CMAKE_BUILD_TYPE_FLAG }}
+          ${CMAKE_GENERATOR_FLAG}
+          ${CMAKE_BUILD_TYPE_FLAG}
           -DCMAKE_BUILD_TYPE=Release
           -Werror=dev
           -DCMAKE_WARN_DEPRECATED=OFF
@@ -129,21 +129,21 @@ jobs:
           -DPYTHON3_EXACT_VERSION="${{ matrix.python }}"
 
       - name: Build admt
-        run: cmake --build build --target admt --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
+        run: cmake --build build --target admt --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
 
       - name: Build docs
-        run: cmake --build build --target docs --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
+        run: cmake --build build --target docs --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
       
       - name: Build tests
-        run: cmake --build build --target tests --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
+        run: cmake --build build --target tests --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
 
       - name: Build python
-        run: cmake --build build --target pyadmt --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
+        run: cmake --build build --target pyadmt --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
 
       - name: Build all other targets
-        run: cmake --build build --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
+        run: cmake --build build --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
 
       - name: Run Ctest
-        run: ctest --test-dir build --verbose -j `nproc` ${{ env.CTEST_CONFIG_FLAG }}
+        run: ctest --test-dir build --verbose -j `nproc` ${CTEST_CONFIG_FLAG}
 
       
