@@ -119,8 +119,6 @@ jobs:
           -DADMT_BUILD_TESTS=ON
           -DADMT_BUILD_PYTHON=ON
           -DPYTHON3_EXACT_VERSION="${{ matrix.python }}"
-        env:
-
 
       - name: Build admt
         run: cmake --build build --target admt --verbose -j `nproc` ${{ env.CMAKE_CONFIG_FLAG }}
