@@ -38,7 +38,7 @@ if(ADMT_BUILD_TESTS)
 endif()
 
 if(ADMT_BUILD_PYTHON)
-    add_subdirectory(python)
+    add_subdirectory(pyadmt)
 endif()
 
 
