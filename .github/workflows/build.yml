@@ -74,7 +74,7 @@ jobs:
           echo "CMAKE_GENERATOR_FLAG='-G ${{matrix.foo.hostcxx}}'" >> $GITHUB_ENV
           echo "CMAKE_BUILD_TYPE_FLAG=" >> $GITHUB_ENV
           echo "CMAKE_CONFIG_FLAG='--config ${{ matrix.config.type }}'"
-          echo "CTEST_CONFIG_FLAG='-C ${{ matrix.config.type }}'"
+          echo "CTEST_CONFIG_FLAG='--build-config ${{ matrix.config.type }}'"
 
 
       - name: Add custom problem matchers for annotations
