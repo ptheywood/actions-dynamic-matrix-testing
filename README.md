@@ -93,4 +93,21 @@ The following are all of the matrix elements required for jobs:
     - The cmake version, usually only 1 value.
 - Visualistaion
     - If vis is wanted or not. ON or OFF. Sometimes always want both, sometimes just one.
-- 
+- ...
+
+
+## Job classifications / how many matrices?
+
+- Minimal
+    - Single job, single platform, might still need full version specification. I.e. docs, linting. Multiple platforms might be useful but not required
+- Small
+    - Job per OS/platform. Oldest supported compilers only.
+- Medium
+    - 'regular' CI. Min/Max compilers/tools.
+- Large / Thorough
+    - Lots of versions
+- Wheels
+    - Configurations to produce wheels.
+
+
+This will still include a lot of duplication. Might be worth having a script instead which produces the requested matrix. I.e. so that the source of which cuda versions etc is only included once (as an explicit list, with a function extracting the min / min per major or min/max per major when required? ) Some complexity with host compilers then though
