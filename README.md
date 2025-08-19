@@ -69,11 +69,28 @@ The dynamic matrix could? include:
 
 This could be an explicit list in a yaml file, or it might be scripting generation of the dynamic matrix so version dependencies are simpler to change?
 
----
 
-2 build matrices are defined in `.github/matrices.yaml`:
+## Matrix members
 
-- `quick` containing a small matrix for "regular" CI
-- `full` containing a large matrix, for full/thorough CI
+The following are all of the matrix elements required for jobs:
 
-The workflow `dynamic.yml` is triggered by several events.
+- OS/image
+    - The runs-on or container value. 
+- CUDA
+    - The CUDA version. 12.0-13.x Currently 10 versions
+- cuda_arch
+    - The target compute capability, which is tied to the cuda version (but could be multiple options per CUDA)
+- Host compiler
+    - multiple os-specific compiler versions, with the supported 
+- MPI?
+    - Mpi under ubuntu is also image specific.
+
+- Python
+    - The python version, generally multiplicative.
+- Configuration
+    - The cmake build config. Release, RelWithDebInfo, MinSizeRel, Debug
+- cmake
+    - The cmake version, usually only 1 value.
+- Visualistaion
+    - If vis is wanted or not. ON or OFF. Sometimes always want both, sometimes just one.
+- 

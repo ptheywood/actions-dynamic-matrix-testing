@@ -9,7 +9,7 @@ on:
 jobs:
   # Select the CI matrix for the full job.
   setup:
-    # Do this for non-pull request triggers, non-pull-request.labeled triggers, and pull-request.labeled triggers which add a ci- label.
+    # Do not run for pull_request labeled events which do not add a label prefixed with 'ci-'
     if: | 
       (github.event_name != 'pull_request') ||
       (github.event_name == 'pull_request' && github.event.action != 'labeled') ||
@@ -41,7 +41,7 @@ jobs:
   
   # Run the build job using the selected dynamic matrix.
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.foo.runs-on }}
     needs: setup
     strategy:
       fail-fast: false
@@ -58,13 +58,13 @@ jobs:
           sudo apt-get install -y cmake
 
       - name: Select Python
-        if: ${{ matrix.PYTHON != '' }}
+        if: ${{ matrix.python != '' }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.PYTHON }}
+          python-version: ${{ matrix.python }}
 
       - name: Install python dependencies
-        if: ${{ matrix.PYTHON != '' }}
+        if: ${{ matrix.python != '' }}
         run: |
           sudo apt-get install -y python3-venv
           python3 -m pip install --upgrade wheel build setuptools
