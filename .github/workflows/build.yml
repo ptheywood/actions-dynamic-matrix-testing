@@ -124,7 +124,7 @@ jobs:
         run: cmake --build build --target tests --verbose -j `nproc`
 
       - name: Build python
-        run: cmake --build build --target python --verbose -j `nproc`
+        run: cmake --build build --target pyadmt --verbose -j `nproc`
 
       - name: Build all other targets
         run: cmake --build build --verbose -j `nproc`
