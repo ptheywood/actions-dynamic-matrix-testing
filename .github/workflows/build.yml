@@ -2,6 +2,10 @@ name: build
 
 on:
   push:
+    branches: 
+      - main
+    tags:
+      - "*"
   pull_request:
     types: [opened, reopened, synchronize, labeled]
   workflow_dispatch:
@@ -55,8 +59,7 @@ jobs:
 
       - name: Install build dependencies (Linux)
         if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
-        run: |
-          sudo apt-get install -y cmake
+        run: sudo apt-get install -y cmake
 
       - name: Select Python
         if: ${{ matrix.python != '' }}
@@ -66,20 +69,32 @@ jobs:
 
       - name: Install python dependencies (Linux)
         if: ${{ runner.os == 'Linux' && matrix.foo.container == '' && matrix.python != '' }}
-        run: |
-          sudo apt-get install -y python3-venv
-          python3 -m pip install --upgrade wheel build setuptools
-          
+        run: python3 -m pip install --upgrade wheel build setuptools
+      
+      - name: Install python dependencies (common)
+        run: python3 -m pip install --upgrade wheel build setuptools
+
       - name: Install docs dependencies (Linux)
         if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
-        run: |
-          sudo apt-get install -y pandoc
+        run: sudo apt-get install -y pandoc
+
+      - name: Install docs dependencies (Windows)
+        if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
+        run: choco install pandoc
 
       - name: Install lint dependencies (Linux)
         if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
         run: |
           python3 -m pip install cpplint
           echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Install lint dependencies (Windows)
+        if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
+        run: |
+          pip install cpplint
+          $pipPath = python -c "import sys; print(sys.prefix + '\\Scripts')"
+          echo "$pipPath" >> $GITHUB_PATH
+        shell: pwsh
 
       - name: Configure CMake
         run: >
