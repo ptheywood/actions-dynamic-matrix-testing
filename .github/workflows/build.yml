@@ -10,6 +10,10 @@ on:
     types: [opened, reopened, synchronize, labeled]
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   # Select the CI matrix for the full job.
   setup:
@@ -99,6 +103,7 @@ jobs:
       - name: Configure CMake
         run: >
           cmake . -B build
+          ${{ env.CMAKE_GENERATOR_FLAG }}
           -DCMAKE_BUILD_TYPE=Release
           -Werror=dev
           -DCMAKE_WARN_DEPRECATED=OFF
@@ -106,7 +111,9 @@ jobs:
           -DADMT_BUILD_TESTS=ON
           -DADMT_BUILD_PYTHON=ON
           -DPYTHON3_EXACT_VERSION="${{ matrix.python }}"
-          
+        env:
+          CMAKE_GENERATOR_FLAG: ${{ matrix.foo.runs-on == 'Windows' && matrix.foo.container == '' && format('-G "{0}"', matrix.foo.hostcxx) || '' }}
+
       - name: Build admt
         run: cmake --build build --target admt --verbose -j `nproc`
 
