@@ -53,7 +53,8 @@ jobs:
       - name: Add custom problem matchers for annotations
         run: echo "::add-matcher::.github/problem-matchers.json"
 
-      - name: Install build dependencies
+      - name: Install build dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
         run: |
           sudo apt-get install -y cmake
 
@@ -63,17 +64,19 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
-      - name: Install python dependencies
-        if: ${{ matrix.python != '' }}
+      - name: Install python dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' && matrix.python != '' }}
         run: |
           sudo apt-get install -y python3-venv
           python3 -m pip install --upgrade wheel build setuptools
           
-      - name: Install docs dependencies
+      - name: Install docs dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
         run: |
           sudo apt-get install -y pandoc
 
-      - name: Install lint dependencies
+      - name: Install lint dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
         run: |
           python3 -m pip install cpplint
           echo "$HOME/.local/bin" >> $GITHUB_PATH
