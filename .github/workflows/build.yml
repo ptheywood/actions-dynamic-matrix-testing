@@ -1,0 +1,153 @@
+name: build
+
+on:
+  push:
+    branches: 
+      - main
+    tags:
+      - "*"
+  pull_request:
+    types: [opened, reopened, synchronize, labeled]
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  # Select the CI matrix for the full job.
+  setup:
+    # Do not run for pull_request labeled events which do not add a label prefixed with 'ci-'
+    if: | 
+      (github.event_name != 'pull_request') ||
+      (github.event_name == 'pull_request' && github.event.action != 'labeled') ||
+      (github.event_name == 'pull_request' && github.event.action == 'labeled' && startsWith(github.event.label.name, 'ci-'))
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.output-matrix.outputs.matrix}}
+    env:
+      # the choice of matrix, initialised to the quick default
+      SELECTED_MATRIX: "quick"
+    steps:
+      - uses: actions/checkout@v4
+      # Choose the full matrix if the workflow was triggered by a workflow dispatch, push to main, or PR with the ci-full label
+      - name: Select full matrix
+        if: |
+          (github.event_name == 'workflow_dispatch') || 
+          (github.event_name == 'push' && github.ref == 'refs/heads/main' ) ||
+          (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'ci-full'))
+        run: |
+          echo "SELECTED_MATRIX=full" >> $GITHUB_ENV
+
+      # Output the selected matrix for subsequent steps
+      - name: Output Matrix
+        id: output-matrix
+        run: |
+          MATRIX_YML=".github/matrices.yaml"
+          matrix=$(yq -o j -I 0 ".${SELECTED_MATRIX}" "$MATRIX_YML")
+          echo "matrix=${matrix}" >> $GITHUB_OUTPUT
+  
+  # Run the build job using the selected dynamic matrix.
+  build:
+    runs-on: ${{ matrix.foo.runs-on }}
+    needs: setup
+    strategy:
+      fail-fast: false
+      matrix:
+        ${{ fromJSON(needs.setup.outputs.matrix) }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Env (Linux)
+        if: ${{ runner.os == 'Linux' }}
+        run: | 
+          echo "CMAKE_GENERATOR_FLAG=" >> $GITHUB_ENV
+          echo "CMAKE_BUILD_TYPE_FLAG=-DCMAKE_BUILD_TYPE='${{ matrix.config.type }}'" >> $GITHUB_ENV
+          echo "CMAKE_CONFIG_FLAG=" >> $GITHUB_ENV
+          echo "CTEST_CONFIG_FLAG=" >> $GITHUB_ENV
+
+
+      - name: Setup env (Windows)
+        if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
+        run: | 
+          echo "CMAKE_GENERATOR_FLAG='-G ${{matrix.foo.hostcxx}}'" >> $GITHUB_ENV
+          echo "CMAKE_BUILD_TYPE_FLAG=" >> $GITHUB_ENV
+          echo "CMAKE_CONFIG_FLAG='--config ${{ matrix.config.type }}'"
+          echo "CTEST_CONFIG_FLAG='--build-config ${{ matrix.config.type }}'"
+
+
+      - name: Add custom problem matchers for annotations
+        run: echo "::add-matcher::.github/problem-matchers.json"
+
+      - name: Install build dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
+        run: sudo apt-get install -y cmake
+
+      - name: Select Python
+        if: ${{ matrix.python != '' }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Install python dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' && matrix.python != '' }}
+        run: python3 -m pip install --upgrade wheel build setuptools
+      
+      - name: Install python dependencies (common)
+        run: python3 -m pip install --upgrade wheel build setuptools
+
+      - name: Install docs dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
+        run: sudo apt-get install -y pandoc
+
+      - name: Install docs dependencies (Windows)
+        if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
+        run: choco install pandoc
+
+      - name: Install lint dependencies (Linux)
+        if: ${{ runner.os == 'Linux' && matrix.foo.container == '' }}
+        run: |
+          python3 -m pip install cpplint
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Install lint dependencies (Windows)
+        if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
+        run: |
+          pip install cpplint
+          $pipPath = python -c "import sys; print(sys.prefix + '\\Scripts')"
+          echo "$pipPath" >> $GITHUB_PATH
+        shell: pwsh
+
+      - name: Configure CMake
+        run: >
+          cmake . -B build
+          ${CMAKE_GENERATOR_FLAG}
+          ${CMAKE_BUILD_TYPE_FLAG}
+          -DCMAKE_BUILD_TYPE=Release
+          -Werror=dev
+          -DCMAKE_WARN_DEPRECATED=OFF
+          -DADMT_BUILD_DOCS=ON
+          -DADMT_BUILD_TESTS=ON
+          -DADMT_BUILD_PYTHON=ON
+          -DPYTHON3_EXACT_VERSION="${{ matrix.python }}"
+
+      - name: Build admt
+        run: cmake --build build --target admt --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
+
+      - name: Build docs
+        run: cmake --build build --target docs --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
+      
+      - name: Build tests
+        run: cmake --build build --target tests --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
+
+      - name: Build python
+        run: cmake --build build --target pyadmt --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
+
+      - name: Build all other targets
+        run: cmake --build build --verbose -j `nproc` ${CMAKE_CONFIG_FLAG}
+
+      - name: Run Ctest
+        run: ctest --test-dir build --verbose -j `nproc` ${CTEST_CONFIG_FLAG}
+
+      

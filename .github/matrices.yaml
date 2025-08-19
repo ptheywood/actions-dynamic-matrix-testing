@@ -1,14 +1,40 @@
+minimal:
+  foo: 
+    - runs-on: ubuntu-24.04
+      container: ""
+      hostcxx: "gcc-14"
+  config:
+    - type: "Release"
+  python:
+    "3.9"
+
 quick:
-  os:
-    - ubuntu-latest
+  foo:
+    - runs-on: ubuntu-24.04
+      container: ""
+      hostcxx: "gcc-14"
+    - runs-on: windows-2025
+      container: ""
+      hostcxx: "Visual Studio 17 2022"
+  config:
+    - type: "Release"
   python:
     - "3.9"
 
 full:
-  os:
-    - ubuntu-latest
-    - windows-latest
+  foo:
+    - runs-on: ubuntu-24.04
+      container: ""
+      hostcxx: "gcc-14"
+    - runs-on: windows-2025
+      container: ""
+      hostcxx: "Visual Studio 17 2022"
+    - runs-on: ubuntu-24.04
+      container: "quay.io/pypa/manylinux_2_28_x86_64"
+      hostcxx: "gcc-toolset-12"
+  config:
+    - type: "Release"
+    - type: "Debug"
   python:
     - "3.9"
     - "3.10"
-    - "3.11"
