@@ -58,7 +58,8 @@ jobs:
 
     env:
       CMAKE_GENERATOR_FLAG: ${{ matrix.foo.runs-on == 'Windows' && matrix.foo.container == '' && format('-G "{0}"', matrix.foo.hostcxx) || '' }}
-      CMAKE_CONFIG_FLAG: ${{ matrix.foo.runs-on != 'Windows' && format('--config "{0}"', matrix.config.type) || '' }}
+      CMAKE_BUILD_TYPE_FLAG: ${{ matrix.foo.runs-on != 'Windows' && format('-DCMAKE_BUILD_TYPE="{0}"', matrix.config.type) || '' }}
+      CMAKE_CONFIG_FLAG: ${{ matrix.foo.runs-on == 'Windows' && matrix.foo.container == '' && format('--config "{0}"', matrix.config.type) || '' }}
       CTEST_CONFIG_FLAG: ${{ matrix.foo.runs-on == 'Windows' && matrix.foo.container == '' && format('--build-config "{0}"', matrix.config.type) || '' }}
 
 
@@ -111,7 +112,7 @@ jobs:
         run: >
           cmake . -B build
           ${{ env.CMAKE_GENERATOR_FLAG }}
-          ${{ env.CMAKE_CONFIG_FLAG }}
+          ${{ env.CMAKE_BUILD_TYPE_FLAG }}
           -DCMAKE_BUILD_TYPE=Release
           -Werror=dev
           -DCMAKE_WARN_DEPRECATED=OFF
