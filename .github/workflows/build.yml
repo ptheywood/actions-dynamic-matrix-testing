@@ -65,6 +65,8 @@ jobs:
           echo "CMAKE_GENERATOR_FLAG=" >> $GITHUB_ENV
           echo "CMAKE_BUILD_TYPE_FLAG=-DCMAKE_BUILD_TYPE='${{ matrix.config.type }}'" >> $GITHUB_ENV
           echo "CMAKE_CONFIG_FLAG=" >> $GITHUB_ENV
+          echo "CTEST_CONFIG_FLAG=" >> $GITHUB_ENV
+
 
       - name: Setup env (Windows)
         if: ${{ runner.os == 'Windows' && matrix.foo.container == '' }}
@@ -72,6 +74,8 @@ jobs:
           echo "CMAKE_GENERATOR_FLAG='-G ${{matrix.foo.hostcxx}}'" >> $GITHUB_ENV
           echo "CMAKE_BUILD_TYPE_FLAG=" >> $GITHUB_ENV
           echo "CMAKE_CONFIG_FLAG='--config ${{ matrix.config.type }}'"
+          echo "CTEST_CONFIG_FLAG='-C ${{ matrix.config.type }}'"
+
 
       - name: Add custom problem matchers for annotations
         run: echo "::add-matcher::.github/problem-matchers.json"
